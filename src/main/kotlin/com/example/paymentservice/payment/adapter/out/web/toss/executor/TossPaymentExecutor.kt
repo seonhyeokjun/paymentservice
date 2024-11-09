@@ -1,4 +1,4 @@
-package com.example.paymentservice.payment.adapter.out.web.executor
+package com.example.paymentservice.payment.adapter.out.web.toss.executor
 
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
