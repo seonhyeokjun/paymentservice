@@ -12,4 +12,12 @@ data class PaymentOrder(
     val paymentStatus: PaymentStatus,
     private var isLedgerUpdated: Boolean = false,
     private var isWalletUpdated: Boolean = false
-)
+) {
+    fun isLedgerUpdated(): Boolean {
+        return isLedgerUpdated
+    }
+
+    fun isWalletUpdated(): Boolean {
+        return isWalletUpdated
+    }
+}

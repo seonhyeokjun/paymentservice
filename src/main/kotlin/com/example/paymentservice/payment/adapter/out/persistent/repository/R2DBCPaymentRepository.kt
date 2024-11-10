@@ -1,0 +1,64 @@
+package com.example.paymentservice.payment.adapter.out.persistent.repository
+
+import com.example.paymentservice.payment.domain.PaymentEvent
+import org.springframework.r2dbc.core.DatabaseClient
+import org.springframework.stereotype.Repository
+import org.springframework.transaction.reactive.TransactionalOperator
+import reactor.core.publisher.Mono
+
+@Repository
+class R2DBCPaymentRepository(
+    private val databaseClient: DatabaseClient,
+    private val transactionalOperator: TransactionalOperator
+) : PaymentRepository {
+    override fun save(paymentEvent: PaymentEvent): Mono<Void> {
+        return insertPaymentEvent(paymentEvent)
+            .flatMap { selectPaymentEventId() }
+            .flatMap { paymentEventId -> insertPaymentOrders(paymentEvent, paymentEventId) }
+            .`as`(transactionalOperator::transactional)
+            .then()
+    }
+
+    private fun selectPaymentEventId() = databaseClient.sql(LAST_INSERT_ID_QUERY)
+        .fetch()
+        .first()
+        .map { it.get("LAST_INSERT_ID()") as Long }
+
+    private fun insertPaymentEvent(paymentEvent: PaymentEvent): Mono<Long> {
+        return databaseClient.sql(INSERT_PAYMENT_EVENT_QUERY)
+            .bind("buyerId", paymentEvent.buyerId)
+            .bind("orderId", paymentEvent.orderId)
+            .bind("orderName", paymentEvent.orderName)
+            .fetch()
+            .rowsUpdated()
+    }
+
+    private fun insertPaymentOrders(
+        paymentEvent: PaymentEvent,
+        paymentEventId: Long
+    ): Mono<Long> {
+        val valueClauses = paymentEvent.paymentOrders.joinToString(", ") { paymentOrder ->
+            "($paymentEventId, ${paymentOrder.sellerId}, '${paymentOrder.orderId}', ${paymentOrder.productId}, ${paymentOrder.amount}, '${paymentOrder.paymentStatus}')"
+        }
+
+        return databaseClient.sql(INSERT_PAYMENT_ORDER_QUERY(valueClauses))
+            .fetch()
+            .rowsUpdated()
+    }
+
+    companion object {
+        val INSERT_PAYMENT_EVENT_QUERY = """
+            INSERT INTO payment_event (buyer_id, order_id, order_name)
+            VALUES (:buyerId, :orderId, :orderName)
+        """.trimIndent()
+
+        val LAST_INSERT_ID_QUERY = """
+            SELECT LAST_INSERT_ID()
+        """.trimIndent()
+
+        val INSERT_PAYMENT_ORDER_QUERY = fun (valueClauses: String) = """
+            INSERT INTO payment_orders (payment_event_id, seller_id, order_id, product_id, amount, payment_order_status) 
+            VALUES $valueClauses
+        """.trimIndent()
+    }
+}

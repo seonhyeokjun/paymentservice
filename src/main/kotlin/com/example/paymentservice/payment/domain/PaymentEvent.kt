@@ -13,4 +13,12 @@ data class PaymentEvent(
     val approvedAt: LocalDateTime? = null,
     val paymentOrders: List<PaymentOrder> = emptyList(),
     private var isPaymentDone: Boolean = false
-)
+) {
+    fun totalAmount(): Long {
+        return paymentOrders.sumOf { it.amount.toLong() }
+    }
+
+    fun isPaymentDone(): Boolean {
+        return isPaymentDone
+    }
+}
