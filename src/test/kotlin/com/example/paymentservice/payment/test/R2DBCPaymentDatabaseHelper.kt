@@ -1,13 +1,13 @@
 package com.example.paymentservice2.payment.test
 
-import com.example.paymentservice.payment.domain.*
+import com.example.paymentservice.payment.domain.PaymentEvent
+import com.example.paymentservice.payment.domain.PaymentOrder
+import com.example.paymentservice.payment.domain.PaymentStatus
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.transaction.reactive.TransactionalOperator
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 import java.math.BigDecimal
-import java.time.LocalDateTime
-import java.time.ZonedDateTime
 
 class R2DBCPaymentDatabaseHelper(
     private val databaseClient: DatabaseClient,
@@ -87,25 +87,25 @@ class R2DBCPaymentDatabaseHelper(
 
     companion object {
         val SELECT_PAYMENT_QUERY = """
-      SELECT * FROM payment_events pe 
-      INNER JOIN payment_orders po ON pe.order_id = po.order_id
-      WHERE pe.order_id = :orderId
-    """.trimIndent()
+          SELECT * FROM payment_events pe 
+          INNER JOIN payment_orders po ON pe.order_id = po.order_id
+          WHERE pe.order_id = :orderId
+        """.trimIndent()
 
         val DELETE_PAYMENT_EVENT_QUERY = """
-      DELETE FROM payment_events
-    """.trimIndent()
+          DELETE FROM payment_events
+        """.trimIndent()
 
         val DELETE_PAYMENT_ORDER_QUERY = """
-      DELETE FROM payment_orders
-    """.trimIndent()
+          DELETE FROM payment_orders
+        """.trimIndent()
 
         val DELETE_PAYMENT_ORDER_HISTORY_QUERY = """
-      DELETE FROM payment_order_histories
-    """.trimIndent()
+          DELETE FROM payment_order_histories
+        """.trimIndent()
 
         val DELETE_OUTBOX_QUERY = """
-      DELETE FROM outboxes
-    """.trimIndent()
+          DELETE FROM outboxes
+        """.trimIndent()
     }
 }

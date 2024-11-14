@@ -5,6 +5,7 @@ import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.reactive.TransactionalOperator
 import reactor.core.publisher.Mono
+import java.math.BigInteger
 
 @Repository
 class R2DBCPaymentRepository(
@@ -22,7 +23,7 @@ class R2DBCPaymentRepository(
     private fun selectPaymentEventId() = databaseClient.sql(LAST_INSERT_ID_QUERY)
         .fetch()
         .first()
-        .map { it.get("LAST_INSERT_ID()") as Long }
+        .map { (it["LAST_INSERT_ID()"] as BigInteger).toLong() }
 
     private fun insertPaymentEvent(paymentEvent: PaymentEvent): Mono<Long> {
         return databaseClient.sql(INSERT_PAYMENT_EVENT_QUERY)
@@ -48,7 +49,7 @@ class R2DBCPaymentRepository(
 
     companion object {
         val INSERT_PAYMENT_EVENT_QUERY = """
-            INSERT INTO payment_event (buyer_id, order_id, order_name)
+            INSERT INTO payment_events (buyer_id, order_id, order_name)
             VALUES (:buyerId, :orderId, :orderName)
         """.trimIndent()
 
